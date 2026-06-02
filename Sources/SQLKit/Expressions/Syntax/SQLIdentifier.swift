@@ -9,8 +9,8 @@
 /// for invalid characters, ``SQLIdentifier`` adds quoting unconditionally.
 ///
 /// To avoid the risk of accidental SQL injection vulnerabilities, in addition to quoting, identifiers are scanned for
-/// the identifier quote character(s) themselves; if found, they are escaped appropriately (by doubling any embedded
-/// quoting character(s), a syntax supported by all known dialects).
+/// the closing identifier quote character(s) themselves; if found, they are escaped appropriately (by doubling any
+/// embedded closing quoting character(s), a syntax supported by all known dialects).
 public struct SQLIdentifier: SQLExpression, ExpressibleByStringLiteral {
     /// The actual identifier itself, unescaped and unquoted.
     public var string: String
@@ -31,19 +31,26 @@ public struct SQLIdentifier: SQLExpression, ExpressibleByStringLiteral {
     @inlinable
     public func serialize(to serializer: inout SQLSerializer) {
         /// This is another instance where legacy API choices limit the robustness of the API's overall behavior.
-        /// Specifically, ``SQLDialect`` allows the ``SQLDialect/identifierQuote`` and
-        /// ``SQLDialect/literalStringQuote-3ur0m`` to be specified as arbitrary ``SQLExpression``s; this probably
-        /// seemed like a good idea for flexibility at the time, but in reality creates additional performance
-        /// bottlenecks and prevents error-proof quoting, short of making ``SQLDialect`` even more confusing (or a
-        /// major version bump).  Fortunately, in practice all knwon dialects always return their quoting characters
-        /// as instances of ``SQLRaw``, so we check for that case and perform the appropriate quoting and/or escaping
-        /// as needed, while falling back to quoting without escaping if the check fails.
-        if let rawQuote = (serializer.dialect.identifierQuote as? SQLRaw)?.sql {
-            serializer.write("\(rawQuote)\(self.string.sqlkit_replacing(rawQuote, with: "\(rawQuote)\(rawQuote)"))\(rawQuote)")
+        /// Specifically, ``SQLDialect`` allows quote expressions to be specified as arbitrary ``SQLExpression``s;
+        /// this probably seemed like a good idea for flexibility at the time, but in reality creates additional
+        /// performance bottlenecks and prevents error-proof quoting, short of making ``SQLDialect`` even more
+        /// confusing (or a major version bump). Fortunately, in practice all known dialects always return their
+        /// quoting characters as instances of ``SQLRaw``, so we check for that case and perform the appropriate
+        /// quoting and/or escaping as needed, while falling back to quoting without escaping if the check fails.
+        let quotes = serializer.dialect.identifierQuotes ?? (
+            open: serializer.dialect.identifierQuote,
+            close: serializer.dialect.identifierQuote
+        )
+
+        if
+            let rawOpenQuote = (quotes.open as? SQLRaw)?.sql,
+            let rawCloseQuote = (quotes.close as? SQLRaw)?.sql
+        {
+            serializer.write("\(rawOpenQuote)\(self.string.sqlkit_replacing(rawCloseQuote, with: "\(rawCloseQuote)\(rawCloseQuote)"))\(rawCloseQuote)")
         } else {
-            serializer.dialect.identifierQuote.serialize(to: &serializer)
+            quotes.open.serialize(to: &serializer)
             serializer.write(self.string)
-            serializer.dialect.identifierQuote.serialize(to: &serializer)
+            quotes.close.serialize(to: &serializer)
         }
     }
 }

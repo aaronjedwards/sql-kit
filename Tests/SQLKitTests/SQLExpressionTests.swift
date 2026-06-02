@@ -316,6 +316,15 @@ struct ExpressionTests {
         try expectSerialization(of: db.raw("\(ident: "hello") \(literal: "there")"), is: "_hello_ ~there~")
     }
 
+    @Test("custom identifier quote pairs")
+    func customIdentifierQuotePairs() throws {
+        let db = TestDatabase()
+
+        db._dialect.identifierQuotes = (open: SQLRaw("["), close: SQLRaw("]"))
+        try expectSerialization(of: db.raw("\(SQLColumn("table", table: "schema"))"), is: "[schema].[table]")
+        try expectSerialization(of: db.raw("\(ident: "weird]name")"), is: "[weird]]name]")
+    }
+
     @Test("columns")
     func columns() throws {
         let db = TestDatabase()

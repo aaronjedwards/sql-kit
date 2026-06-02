@@ -217,6 +217,7 @@ struct BaseTests {
         }
         
         #expect((TestDialect().literalStringQuote as? SQLRaw)?.sql == "'")
+        #expect(TestDialect().identifierQuotes == nil)
         #expect(TestDialect().autoIncrementFunction == nil)
         #expect((TestDialect().literalDefault as? SQLRaw)?.sql == "DEFAULT")
         #expect(TestDialect().supportsIfExists)

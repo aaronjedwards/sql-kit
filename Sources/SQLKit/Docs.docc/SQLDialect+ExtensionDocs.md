@@ -6,6 +6,7 @@
 
 - ``SQLDialect/name``
 - ``SQLDialect/identifierQuote``
+- ``SQLDialect/identifierQuotes``
 - ``SQLDialect/literalStringQuote-3ur0m``
 - ``SQLDialect/bindPlaceholder(at:)``
 - ``SQLDialect/literalBoolean(_:)``

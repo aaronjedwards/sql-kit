@@ -22,9 +22,20 @@ public protocol SQLDialect: Sendable {
     /// identifiers, such as table and column names.
     ///
     /// The identifier quote is placed immediately preceding and following each identifier.
+    /// Dialects with asymmetric identifier delimiters should implement ``identifierQuotes``
+    /// instead.
     ///
     /// No default is provided.
     var identifierQuote: any SQLExpression { get }
+
+    /// Expressions (usually ``SQLRaw``s) giving the character(s) placed immediately before
+    /// and after each quoted SQL identifier.
+    ///
+    /// Defaults to `nil`, in which case ``identifierQuote`` is used for both sides. Dialects
+    /// with asymmetric identifier delimiters, such as SQL Server's `[identifier]` syntax,
+    /// should return a pair from this property. When both expressions are ``SQLRaw``, embedded
+    /// closing delimiters are escaped by doubling them.
+    var identifierQuotes: (open: any SQLExpression, close: any SQLExpression)? { get }
     
     /// An expression (usually an ``SQLRaw``) giving the character(s) used to quote literal
     /// string values which appear in a query, such as enumerator names.
@@ -480,6 +491,12 @@ public struct SQLUnionFeatures: OptionSet, Sendable {
 /// as possible, so as to avoid breaking all existing dialects every time a new requirement
 /// is added to the protocol and allow gradual adoption of new capabilities.
 extension SQLDialect {
+    /// Default implementation of ``identifierQuotes``.
+    @inlinable
+    public var identifierQuotes: (open: any SQLExpression, close: any SQLExpression)? {
+        nil
+    }
+
     /// Default implementation of ``literalStringQuote-3ur0m``.
     @inlinable
     public var literalStringQuote: any SQLExpression {

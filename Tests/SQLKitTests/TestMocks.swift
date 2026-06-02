@@ -111,6 +111,7 @@ struct GenericDialect: SQLDialect {
     var supportsIfExists = true
     var supportsReturning = true
     var identifierQuote: any SQLExpression = SQLRaw("``")
+    var identifierQuotes: (open: any SQLExpression, close: any SQLExpression)? = nil
     var literalStringQuote: any SQLExpression = SQLRaw("'")
     var enumSyntax = SQLEnumSyntax.typeName
     var autoIncrementClause: any SQLExpression = SQLRaw("AWWTOEINCREMENT")
